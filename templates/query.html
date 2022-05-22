@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {{ file_list }}
+    {{ count }}
+    <h3>imagename (<a href = "{{ url_for('remove') }}">Remove</a>)</h3>
+    {% for c in file_list%}
+    <div>
+        <img src="{{ url_for('static', filename='upscale/' + c)}}"/>
+    </div>
+    {% endfor %}
+    <div id="x"></div>
+
+</body>
+</html>
