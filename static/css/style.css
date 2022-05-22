@@ -301,4 +301,9 @@ a:focus {
     -webkit-transform: translate3d(0, -25%, 0);
     transform: translate3d(0, -25%, 0);
   }
+
+ul li{
+  list-style:none;
+  float : left;
+  }
   

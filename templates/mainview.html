@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>obeta</title>
+
+    <!--<link rel="stylesheet" href="static/css/button_tem.css">-->
+    <link href="{{ url_for('static', filename='css/button_tem.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<script>
+  if('{{ error }}' == "사진 파일 에러"){
+    alert('{{error}}');
+  }
+</script>
+<body>
+  <div style="float:left; margin-top: 150px; width: 200px">
+    <div class="dropdown" style="margin-bottom: 30px;">
+      <button class="dropbtn"> 
+        <span class="dropbtn_icon">top</span>
+        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; +
+      </button>
+      <div class="dropdown-content" >
+        <a href="mainview/short sleeve t-shirt">short sleeve t-shirt</a>
+        <a href="mainview/polo shirt">polo shirt</a>
+        <a href="mainview/long sleeve t-shirt">long sleeve t-shirt</a>
+        <a href="mainview/sweatshirt">sweatshirt</a>
+        <a href="mainview/sleeveless tee">sleeveless tee</a>
+        <a href="mainview/hoodie">hoodie</a>
+        <a href="mainview/shirt">shirt</a>
+        <a href="mainview/sweater">sweater</a>
+        <a href="mainview/hood zip up">hood zip up</a>
+        <a href="mainview/coat">coat</a>
+        <a href="mainview/rider jacket">rider jacket</a>
+        <a href="mainview/mustang">mustang</a>
+        <a href="mainview/trucker jacket">trucker jacket</a>
+        <a href="mainview/suit">suit</a>
+        <a href="mainview/short padding">short padding</a>
+        <a href="mainview/long padding">long padding</a>
+        <a href="mainview/Cardigan">Cardigan</a>
+        <a href="mainview/padded vest">padded vest</a>
+        <a href="mainview/anorak jacket">anorak jacket</a>
+        <a href="mainview/vest">vest</a>
+        <a href="mainview/Fleece">Fleece</a>
+        <a href="mainview/training jacket">training jacket</a>
+        <a href="mainview/stadium jacket">stadium jacket</a>
+      </div>
+    </div>
+    <div class="dropdown" style="margin-bottom: 30px;">
+      <button class="dropbtn"> 
+        <span class="dropbtn_icon">bottom</span>
+        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; +
+      </button>
+      <div class="dropdown-content">
+        <div>
+          <a href="mainview/denim pants">denim pants</a>
+          <a href="mainview/short pants">short pants</a>
+        </div>
+        <a href="mainview/cotton pants">cotton pants</a>
+        <a href="mainview/Leggings">Leggings</a>
+        <a href="mainview/slacks">slacks</a>
+        <a href="mainview/training pants">training pants</a>
+        <a href="mainview/skirt">skirt</a>
+      </div>
+    </div>
+    <div class="dropdown" style="margin-bottom: 30px;">
+      <button class="dropbtn"> 
+        <span class="dropbtn_icon">overall</span>
+        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; +
+      </button>
+      <div class="dropdown-content">
+        <a href="mainview/onepiece">onepiece</a>
+      </div>
+    </div>
+  </div>
+  
+    <section class="content" style="display: grid; margin: 0px; ">
+        <h2>main</h2>
+        {%if userid%}
+        {{userid}}<a>안녕하세요</a>
+        {%endif%}
+        <div class="box bg-1">
+          <ul>
+              {% for c in file_list%}
+              <li style="width : 160px; height : 250px;
+              border: 0.5px solid #000; margin:1px; overflow:hidden;">
+              <div style="position : relative; left : 50%; top : 50%; right:50%; transform: translate(-50%, -50%);text-align: center " >
+                <div>
+                  <img src="{{ url_for('static', filename='upscale/' + c.number + '.png')}}" style="width: 150px; height: 150px"/>
+                </div>
+                <div>
+                  <a style = "width : 150px; height:100px; font-size: 12px; font-family: Apple SD Gothic Neo, Noto Sans KR, sans-serif;
+                  font-weight: bold;
+                  color: #000; overflow:hidden">{{c.name}}</a>
+                </div>
+              </div>
+              </li>
+              {% endfor %}
+            </li>
+            </ul>    
+
+        </div>
+        
+        <script>
+        
+        </script>
+        <div class="box bg-2" style="display: grid;">
+        </div>
+      </section>
+      <div class="box bg-3" style="display: flex; padding: 0em 0em 0em 0em;">
+       <button class="button button--winona button--border-thin button--text-thick button--inverted" data-text="Open Project"><span>Open Project</span></button>
+       <button class="button button--winona button--border-thin button--text-thick button--inverted" data-text="Create New"><span>Create New</span></button>
+       <button class="button button--winona button--border-thin button--text-thick button--inverted" data-text="Publish"><span>Publish</span></button>
+       <button class="button button--winona button--border-thin button--text-thick button--inverted" data-text="Open Project"><span>Open Project</span></button>
+       <button class="button button--winona button--border-thin button--text-thick button--inverted" data-text="Create New"><span>Create New</span></button>
+       <button class="button button--winona button--border-thin button--text-thick button--inverted" data-text="Publish"><span>Publish</span></button>
+     </div>
+
+</body>
+</html>
+<script>
+    function c(a){
+        if(window.location.href.indexOf("index") > -1){
+          window.location.href = 'http://218.48.207.77:9999/upload';
+        }
+        else{
+          window.location.href = a +'upload';
+        }
+        
+    }
+    function d(a){
+      if(window.location.href.indexOf("index") > -1){
+        window.location.href = 'http://218.48.207.77:9999/select_image';
+      }
+      else{
+        window.location.href = a +'select_image';
+      }
+      
+  }
+
+  function f(a){
+      if(window.location.href.indexOf("index") > -1){
+        window.location.href = 'http://218.48.207.77:9999/register';
+      }
+      else{
+        window.location.href = a +'register';
+      }
+      
+  }
+  function g(a){
+      if(window.location.href.indexOf("index") > -1){
+        window.location.href = 'http://218.48.207.77:9999/login';
+      }
+      else{
+        window.location.href = a +'login';
+      }
+      
+  }
+</script>

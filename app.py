@@ -164,14 +164,14 @@ def upload_file():
             return render_template('index.html', Testname = temp)
     return render_template('index.html' , error = "사진 파일 에러")
 
-@app.route('/goods/<category>', methods = ['GET'])
+@app.route('/mainview/<category>', methods = ['GET'])
 def goods(category):
     query = category
     id = Clothes.query.filter(Clothes.cate.like(query)).all()
     file_list=[]
     for num in id:
         file_list.append(str(num.number)+".png")
-    return render_template('query.html', file_list=file_list, count=len(file_list), dbimg = dbimg.query.all())
+    return render_template('mainview.html', file_list=id, count=len(file_list))
 
 
 @app.route('/query2', methods = ['POST'])
