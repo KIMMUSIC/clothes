@@ -91,6 +91,10 @@ def search():
 def login():
     return render_template('login.html')
 
+@app.route('/camera')
+def camera():
+    return render_template('camera.html')
+
 @app.route('/select_image')
 def select_image():
     file_list = os.listdir(path)

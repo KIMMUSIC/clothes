@@ -42,6 +42,7 @@
           <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Select image" onclick="f(window.location.href);"><span>Register</span></button>
           <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Select image" onclick="g(window.location.href);"><span>Login</span></button>
           <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Select image" onclick="h(window.location.href);"><span>Search</span></button>
+          <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Select image" onclick="i(window.location.href);"><span>Camera</span></button>
         </div>
       </section>
       <div class="box bg-3" style="display: flex; padding: 0em 0em 0em 0em;">
@@ -99,6 +100,15 @@
       }
       else{
         window.location.href = a +'search';
+      }
+      
+  }
+  function i(a){
+      if(window.location.href.indexOf("index") > -1){
+        window.location.href = 'http://localhost:8080/camera';
+      }
+      else{
+        window.location.href = a +'camera';
       }
       
   }
