@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+    <div>
+        <img src="{{ url_for('static', filename='upscale/' + id.number + '.png')}}" style="width: 150px; height: 150px"/>
+        <div>{{id.cate}}</div>
+        <div>{{id.link}}</div>
+        <div>{{id.name}}</div>
+        <div>{{id.season}}</div>
+        <div>{{id.gemder}}</div>
+        <button onclick = "purchase('{{id.number}}')">구매하기</button>
+
+      </div>
+      <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+      <script>
+      purchase= function(number, userid) {
+          itemid = number
+          $.ajax({
+            type: 'POST',
+            url: '/mycsv',
+            cache: false,
+            data: {itemid : itemid},
+            success: function () {
+              alert("Success");
+            }
+          })
+        };
+
+      </script>
+</html>

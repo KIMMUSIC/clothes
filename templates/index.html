@@ -37,7 +37,7 @@
         </script>
         <div class="box bg-2" style="display: grid;">
           <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" style="width: 450px;" data-text="Upload File" onclick="c(window.location.href);"><span>Upload File</span></button>
-          <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Recommend"><span>Recommend</span></button>
+          <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Recommend" onclick="j(window.location.href);"><span>Recommend</span></button>
           <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Select image" onclick="d(window.location.href);"><span>Select image</span></button>
           <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Select image" onclick="f(window.location.href);"><span>Register</span></button>
           <button class="button button--winona button--border-thick button--round-l button--text-upper button--size-s button--text-thick" data-text="Select image" onclick="g(window.location.href);"><span>Login</span></button>
@@ -109,6 +109,15 @@
       }
       else{
         window.location.href = a +'camera';
+      }
+      
+  }
+  function j(a){
+      if(window.location.href.indexOf("index") > -1){
+        window.location.href = 'http://localhost:8080/recommend';
+      }
+      else{
+        window.location.href = a +'recommend';
       }
       
   }

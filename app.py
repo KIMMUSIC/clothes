@@ -16,6 +16,14 @@ from tensorflow.keras.layers import GlobalMaxPooling2D
 from tensorflow.keras.applications.resnet50 import ResNet50,preprocess_input
 from sklearn.neighbors import NearestNeighbors
 import PIL
+from ast import literal_eval
+import pandas as pd
+import numpy as np
+import warnings
+import csv as csv_
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+warnings.filterwarnings(action='ignore')
 
 UPLOAD_FOLDER = '\static\image'
 ALLOWED_EXTENSION = {'txt', 'png', 'jpg', 'jpeg', 'gif'}
@@ -30,6 +38,42 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///imgname.db' #가상의 db생성 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 app.config['SECRET_KEY'] = "random string"
+
+import scipy.sparse as sparse
+import implicit
+import pandas as pd
+
+def init_CF():
+    PATH = 'rating.csv'
+    file = pd.read_csv(PATH)
+
+    train_data = file.pivot_table('Rating', index='UID', columns='Number').fillna(0)
+    temp = sparse.csr_matrix(train_data)
+    model = implicit.als.AlternatingLeastSquares(factors=20, regularization=0.1, iterations=900)
+
+
+    model.fit(temp)
+    return temp, model
+
+
+
+cf_table, model = init_CF()
+
+
+def recommand_cf(model, uid, cf_table):
+    recommanded = model.recommend(uid, cf_table[0])
+    return recommanded[0]
+
+
+
+def find_sim_clothes(df, sorted_idx, item_number, top_n=10):
+    title_clothes = df[df['number'] == item_number]
+    title_clothes_idx = title_clothes.index.values
+    top_sim_idx = sorted_idx[title_clothes_idx, :top_n]
+    top_sim_idx = top_sim_idx.reshape(-1,)
+    similar_clothes = df.iloc[top_sim_idx]
+    
+    return similar_clothes
 
 db = SQLAlchemy(app)
 
@@ -74,6 +118,47 @@ def main():
     userid = session.get('userid',None)
     return render_template('index.html', userid = userid)
 
+@app.route('/mycsv', methods=['POST'])
+def my_csv():
+    itemid = request.form['itemid']
+    id = session.get('userid',None)
+    item = Clothes.query.filter(Clothes.number == itemid).first()
+    attrs = item.nouns
+    cate = item.cate
+        
+    csv = pd.read_csv('musin.csv', names = ['id', 'category','attrs'], encoding = 'cp949')
+    
+    find_row = csv.loc[(csv['id'] == id) & (csv['category'] == cate)]
+    
+    find_row_list = find_row.values.tolist()
+    
+    # 출력 부분 print(find_row_list, file=sys.stderr)
+    
+    # 만약 검색한 값이 없다면 -> 새로운 행 추가( id, category 로 검색 )
+    if len(find_row_list) == 0:
+        with open('musin.csv' , 'a' , encoding = 'cp949' ,newline = '') as input_file:
+            f = csv_.writer(input_file)
+            f.writerow([id, cate, attrs])
+            
+    # 검색해서 값이 나왔다면 -> 처음부터 행들을 저장하면서 수정해야 하는 행이 나오면 수정해서 리스트에 저장.
+    else :
+        modified_file = []
+        with open('musin.csv', 'r', encoding = 'cp949', newline='')as r_file:
+            rdr = csv_.reader(r_file)
+            
+            for line in rdr:
+                if (line[0] == id) & (line[1] == cate):
+                    temp_attrs = find_row_list[0][2]
+                    new_attrs = temp_attrs + ' ' + attrs
+                    line[2] = new_attrs
+                modified_file.append(line)
+                
+        with open('musin.csv', 'w', encoding = 'cp949', newline='')as w_file:
+            wr =csv_.writer(w_file)
+            wr.writerows(modified_file)
+               
+    return redirect('/')
+
 @app.route('/button_tem')
 def button_tem():
     return render_template('button_tem.html')
@@ -100,6 +185,30 @@ def select_image():
     file_list = os.listdir(path)
     count = len(file_list)
     return render_template('select_image.html', file_list=file_list, count=count, dbimg = dbimg.query.all())
+
+@app.route('/recommend')
+def recommend():
+    userid = session.get('userid',None)
+    csv = pd.read_csv('musin.csv', names = ['id', 'category','attrs'], encoding = 'cp949')
+    row = csv.loc[(csv['id'] == int(userid))]
+
+    clothes = pd.read_csv('result.csv', encoding='cp949')
+    clothes_df = clothes[['number','name','link','tob','cate','season','situation','gender','tag','attr','nouns']]
+    user_df = row[['id', 'category','attrs']]
+    cnt_vect = CountVectorizer(min_df=0, ngram_range=(1,2))
+    clothes_vect = cnt_vect.fit_transform(clothes_df['nouns'].values.astype('str'))
+    user_vect = cnt_vect.transform(user_df['attrs'].values.astype('str'))
+    clothes_sim = cosine_similarity(user_vect, clothes_vect)
+    clothes_sim_idx = (-clothes_sim).argsort()[::]
+    clothes_sim_idx = clothes_sim_idx[0][0:9]
+
+    recommand_item = recommand_cf(model, int(userid), cf_table)
+    file_list=[]
+    for id in recommand_item:
+        file_list.append(str(id))
+    for id in clothes_sim_idx:
+        file_list.append(str(id))
+    return render_template('mainview2.html', file_list=file_list, count=len(file_list))
 
 @app.route('/register', methods=['POST']) #GET(정보보기), POST(정보수정) 메서드 허용
 def register2():
@@ -171,11 +280,17 @@ def upload_file():
 @app.route('/mainview/<category>', methods = ['GET'])
 def goods(category):
     query = category
-    id = Clothes.query.filter(Clothes.cate.like(query)).all()
+    id = Clothes.query.filter(Clothes.cate == query).all()
     file_list=[]
     for num in id:
         file_list.append(str(num.number)+".png")
     return render_template('mainview.html', file_list=id, count=len(file_list))
+
+@app.route('/detail/<number>', methods = ['GET'])
+def detail(number):
+    query = number
+    id = Clothes.query.filter(Clothes.number == query).first()
+    return render_template('detail.html', id=id, count=len(file_list))
 
 
 @app.route('/query2', methods = ['POST'])
