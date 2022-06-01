@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from unicodedata import name
 from flask import Flask, render_template, request, redirect, url_for, flash
+from sqlalchemy import false
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from flask import session
@@ -23,7 +24,27 @@ import warnings
 import csv as csv_
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from flask import request, make_response
 warnings.filterwarnings(action='ignore')
+import datetime
+import json
+with open('result.json', 'r', encoding='utf8') as f:
+    json_data = json.load(f)
+
+now=datetime.datetime.now()
+
+# 파이썬은 &&기호로 연결할 필요 없이 두 개의 범위 구분을 한 번에 쓸 수 있다.
+if 3<=now.month<=5:
+    nseason="spring"
+
+if 6<=now.month<=8:
+    nseason="summer"
+
+if 9<=now.month<=11:
+    nseason="spring"
+
+if now.month<=2 or now.month==12:
+    nseason="winter"
 
 UPLOAD_FOLDER = '\static\image'
 ALLOWED_EXTENSION = {'txt', 'png', 'jpg', 'jpeg', 'gif'}
@@ -124,13 +145,13 @@ def my_csv():
     id = session.get('userid',None)
     item = Clothes.query.filter(Clothes.number == itemid).first()
     attrs = item.nouns
-    cate = item.cate
         
-    csv = pd.read_csv('musin.csv', names = ['id', 'category','attrs'], encoding = 'cp949')
+    csv = pd.read_csv('musin.csv', names = ['id', 'attrs'], encoding = 'cp949')
     
-    find_row = csv.loc[(csv['id'] == id) & (csv['category'] == cate)]
-    
+    find_row = csv.loc[(csv['id'] == int(id))]
     find_row_list = find_row.values.tolist()
+    
+    print(find_row)
     
     # 출력 부분 print(find_row_list, file=sys.stderr)
     
@@ -138,7 +159,7 @@ def my_csv():
     if len(find_row_list) == 0:
         with open('musin.csv' , 'a' , encoding = 'cp949' ,newline = '') as input_file:
             f = csv_.writer(input_file)
-            f.writerow([id, cate, attrs])
+            f.writerow([id,attrs])
             
     # 검색해서 값이 나왔다면 -> 처음부터 행들을 저장하면서 수정해야 하는 행이 나오면 수정해서 리스트에 저장.
     else :
@@ -147,10 +168,10 @@ def my_csv():
             rdr = csv_.reader(r_file)
             
             for line in rdr:
-                if (line[0] == id) & (line[1] == cate):
-                    temp_attrs = find_row_list[0][2]
+                if (line[0] == id):
+                    temp_attrs = find_row_list[0][1]    
                     new_attrs = temp_attrs + ' ' + attrs
-                    line[2] = new_attrs
+                    line[1] = new_attrs
                 modified_file.append(line)
                 
         with open('musin.csv', 'w', encoding = 'cp949', newline='')as w_file:
@@ -186,29 +207,162 @@ def select_image():
     count = len(file_list)
     return render_template('select_image.html', file_list=file_list, count=count, dbimg = dbimg.query.all())
 
+
 @app.route('/recommend')
 def recommend():
+
     userid = session.get('userid',None)
-    csv = pd.read_csv('musin.csv', names = ['id', 'category','attrs'], encoding = 'cp949')
+    user = User.query.filter(User.userid == str(userid)).first()
+    ugender = user.gender
+    csv = pd.read_csv('musin.csv', names = ['id','attrs'], encoding = 'cp949')
     row = csv.loc[(csv['id'] == int(userid))]
+    season = request.cookies.get('season')
+    gender = request.cookies.get('gender')
+    situation = request.cookies.get('situation')
 
     clothes = pd.read_csv('result.csv', encoding='cp949')
     clothes_df = clothes[['number','name','link','tob','cate','season','situation','gender','tag','attr','nouns']]
-    user_df = row[['id', 'category','attrs']]
+    user_df = row[['id','attrs']]
     cnt_vect = CountVectorizer(min_df=0, ngram_range=(1,2))
     clothes_vect = cnt_vect.fit_transform(clothes_df['nouns'].values.astype('str'))
     user_vect = cnt_vect.transform(user_df['attrs'].values.astype('str'))
     clothes_sim = cosine_similarity(user_vect, clothes_vect)
     clothes_sim_idx = (-clothes_sim).argsort()[::]
-    clothes_sim_idx = clothes_sim_idx[0][0:9]
+    clothes_sim_idx = clothes_sim_idx[0]
+    total = 0
+    file_list=[]
+    c = {}
+    c2 = {}
+    total2 = 0
+    for id in clothes_sim_idx:
+        item = Clothes.query.filter(Clothes.number == int(id)).first()
+        if season == 'true':
+            if item.season != nseason:
+                continue
+        if gender == 'true':
+            if item.gender != '공용':
+                if item.gender != ugender:
+                    continue
+
+        cate = item.cate
+        if cate in c:
+            c[cate]  = c[cate] + 1
+        else:
+            c[cate] = 0
+        if(c[cate] > 3): continue
+        file_list.append(str(id))
+        total = total+1
+        if(total >= 10): break
+
+
 
     recommand_item = recommand_cf(model, int(userid), cf_table)
-    file_list=[]
+    print(recommand_item)
     for id in recommand_item:
+        item = Clothes.query.filter(Clothes.number == int(id)).first()
+        print(season, nseason, item.season)
+        if season == 'true':
+            if item.season != nseason:
+                continue
+        if gender == 'true':
+            if item.gender != '공용':
+                if item.gender != ugender:
+                    continue
+        cate = item.cate
+        if cate in c2:
+            c2[cate]  = c2[cate] + 1
+        else:
+            c2[cate] = 0
+        if(c2[cate] > 3): continue
         file_list.append(str(id))
-    for id in clothes_sim_idx:
-        file_list.append(str(id))
+        total2 = total2+1
+        if(total2 >= 10): break
+
+
     return render_template('mainview2.html', file_list=file_list, count=len(file_list))
+
+@app.route('/recommend2')
+def recommend2():
+    userid = session.get('userid',None)
+    user = User.query.filter(User.userid == str(userid)).first()
+    ugender = user.gender
+    gender = request.args.get('gender')
+    season = request.args.get('season')
+    situation = request.args.get('situation')
+    userid = session.get('userid',None)
+    csv = pd.read_csv('musin.csv', names = ['id','attrs'], encoding = 'cp949')
+    row = csv.loc[(csv['id'] == int(userid))]
+
+    clothes = pd.read_csv('result.csv', encoding='cp949')
+    clothes_df = clothes[['number','name','link','tob','cate','season','situation','gender','tag','attr','nouns']]
+    user_df = row[['id','attrs']]
+    cnt_vect = CountVectorizer(min_df=0, ngram_range=(1,2))
+    clothes_vect = cnt_vect.fit_transform(clothes_df['nouns'].values.astype('str'))
+    user_vect = cnt_vect.transform(user_df['attrs'].values.astype('str'))
+    clothes_sim = cosine_similarity(user_vect, clothes_vect)
+    clothes_sim_idx = (-clothes_sim).argsort()[::]
+    clothes_sim_idx = clothes_sim_idx[0]
+    total = 0
+    file_list=[]
+    c = {}
+    c2 ={}
+    total2 = 0
+    for id in clothes_sim_idx:
+        item = Clothes.query.filter(Clothes.number == int(id)).first()
+        print(season, nseason, item.season)
+        if season == 'true':
+            if item.season != nseason:
+                continue
+        if gender == 'true':
+            if item.gender != '공용':
+                if item.gender != ugender:
+                    continue
+        cate = item.cate
+        if cate in c:
+            c[cate]  = c[cate] + 1
+        else:
+            c[cate] = 0
+        if(c[cate] > 3): continue
+        file_list.append(str(id))
+        total = total+1
+        if(total >= 10): break
+
+
+
+    recommand_item = recommand_cf(model, int(userid), cf_table)
+    print(recommand_item)
+    for id in recommand_item:
+        item = Clothes.query.filter(Clothes.number == int(id)).first()
+        print(season, nseason, item.season)
+        if season == 'true':
+            if item.season != nseason:
+                continue
+        if gender == 'true':
+            if item.gender != '공용':
+                if item.gender != ugender:
+                    continue
+        cate = item.cate
+        if cate in c2:
+            c2[cate]  = c2[cate] + 1
+        else:
+            c2[cate] = 0
+        if(c2[cate] > 3): continue
+        file_list.append(str(id))
+        total2 = total2+1
+        if(total2 >= 10): break
+
+    res = make_response(render_template('mainview2.html', file_list=file_list, count=len(file_list)))
+
+
+    if gender is None: res.set_cookie('gender','false') 
+    else: res.set_cookie('gender',gender)
+    if season is None: res.set_cookie('season','false')
+    else: res.set_cookie('season',season)
+    if situation is None: res.set_cookie('situation','false')
+    else: res.set_cookie('situation',situation)
+
+    return res
+    #return render_template('mainview2.html', file_list=file_list, count=len(file_list))
 
 @app.route('/register', methods=['POST']) #GET(정보보기), POST(정보수정) 메서드 허용
 def register2():
@@ -290,7 +444,23 @@ def goods(category):
 def detail(number):
     query = number
     id = Clothes.query.filter(Clothes.number == query).first()
-    return render_template('detail.html', id=id, count=len(file_list))
+    attrs = json_data[int(number)]['tag']
+
+    clothes = pd.read_csv('result.csv', encoding='cp949')
+    clothes_df = clothes[['number','name','link','tob','cate','season','situation','gender','tag','attr','nouns']]
+    cnt_vect = CountVectorizer(min_df=0, ngram_range=(1,2))
+    clothes_vect = cnt_vect.fit_transform(clothes_df['nouns'].values.astype('str'))
+    clothes_sim = cosine_similarity(clothes_vect, clothes_vect)
+    clothes_sim_idx = (-clothes_sim).argsort()[::]
+    clothes_sim_idx = clothes_sim_idx[int(query)][1:7]
+    file_list=[]
+    for a in clothes_sim_idx:
+        cl = Clothes.query.filter(Clothes.number == int(a)).first()
+        file_list.append(cl)
+
+
+
+    return render_template('detail.html', id=id,attr = attrs, clothes = file_list, count=len(file_list))
 
 
 @app.route('/query2', methods = ['POST'])

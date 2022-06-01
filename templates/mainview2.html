@@ -13,7 +13,7 @@
     alert('{{error}}');
   }
 </script>
-<body>
+<body onload="load()">
   <div style="float:left; margin-top: 150px; width: 200px">
     <div class="dropdown" style="margin-bottom: 30px;">
       <button class="dropbtn"> 
@@ -79,6 +79,19 @@
         {%if userid%}
         {{userid}}<a>안녕하세요</a>
         {%endif%}
+        <div>
+          <form method="get" action="/recommend2">
+            <label><input id = "season" type="checkbox" name="season" value="true" > 계절 </label>
+            <label><input id = "gender" type="checkbox" name="gender" value="true" > 성별</label>
+            <select id = "situation" name="situation" class="select">
+              <option value="all">상황</option>
+              <option value="casual">casual</option>
+              <option value="office">office</option>
+              <option value="gym">gym</option>
+          </select>
+            <p><input type="submit"onclick="save()" value="Submit"></p>
+          </form>
+        </div>
         <div class="box bg-1">
           <ul>
               {% for c in file_list%}
@@ -160,4 +173,40 @@
   function detail(a){
           window.location.href = 'http://localhost:8080/detail/' + a;
     }
+    function save(){
+      const select = document.querySelector(".select");
+      const currentValue = select.options[select.selectedIndex].value;
+      
+    var checkbox = document.getElementById('gender');
+    if(document.getElementById('gender').checked) {
+        localStorage.setItem('gender', true);
+    }else{
+      localStorage.setItem('gender', false);
+    }
+    var checkbox = document.getElementById('season');
+    if(document.getElementById('season').checked) {
+        localStorage.setItem('season', true);
+    }else{
+      localStorage.setItem('season', false);
+    }
+
+    localStorage.setItem('situation',currentValue)
+}
+
+function load(){    
+    var checked = localStorage.getItem('gender');
+    if (checked == "true") {
+        document.getElementById("gender").setAttribute('checked','checked');
+    }
+
+    var checked2 = localStorage.getItem('season');
+    if (checked2 == "true") {
+        document.getElementById("season").setAttribute('checked','checked');
+    }
+
+    const select = document.querySelector(".select");
+    select.value = localStorage.getItem('situation');
+
+    
+}
 </script>

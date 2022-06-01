@@ -1,0 +1,23 @@
+body {
+    margin-top: 100px;
+  margin-bottom: 100px;
+  margin-right: 150px;
+  margin-left: 80px;
+}
+img{
+    float : left;
+}
+.info{
+    float : left;
+    margin-left : 50px;
+}
+
+.box {
+    padding: 4.5em 0;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }

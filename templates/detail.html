@@ -1,16 +1,62 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>obeta</title>
 
-    <div>
-        <img src="{{ url_for('static', filename='upscale/' + id.number + '.png')}}" style="width: 150px; height: 150px"/>
-        <div>{{id.cate}}</div>
-        <div>{{id.link}}</div>
-        <div>{{id.name}}</div>
-        <div>{{id.season}}</div>
-        <div>{{id.gemder}}</div>
-        <button onclick = "purchase('{{id.number}}')">구매하기</button>
-
+    <!--<link rel="stylesheet" href="static/css/button_tem.css">-->
+    <link href="{{ url_for('static', filename='css/detail.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div style='overflow:hidden'>
+      <h1>{{id.name}}</h1>
+      <div class="image">
+        <img src="{{ url_for('static', filename='upscale/' + id.number + '.png')}}" style="width: 500px; height: 600px"/>
       </div>
+      <div class="info">
+        <div>
+          <h4>Product Info</h4>
+        </div>
+        <div style="float : left;">
+        <div>분류 : {{id.cate}}</div>
+        <div>시즌 : {{id.season}}</div>
+        <div>성별 : {{id.gender}}</div>
+        {% for c in attr%}
+        <div style="margin-top : 5px;">#{{c}}</div>
+        {%endfor%}
+        <div style="margin-top : 30px;">
+        <div style="background : #000; color: #fff; width: 270px; height: 60px; text-align: center; line-height: 58px; float : left; margin-right:10px" ><A href = "{{id.link}}" target="_blank" style="text-decoration-line: none;color: inherit;" >바로가기</a></div>
+        <div style="background : #000; color: #fff; width: 270px; height: 60px; text-align: center; line-height: 58px; float:left"><a onclick = "purchase('{{id.number}}')" style="cursor:pointer">구매하기</a></div>
+      </div>
+      </div>
+      </div>
+    </div>
+      
+      <div style="clear:both; margin-top : 50px; ">
+        <hr>
+      </div>
+      <h2>비슷한 옷</h2>
+      <div class="box bg-1">
+        <ul>
+            {% for c in clothes%}
+            <li style="width : 160px; height : 250px;
+            border: 0.5px solid #000; margin:1px; overflow:hidden; float:left; ">
+            <div style="position : relative; left : 50%; top : 50%; right:50%; transform: translate(-50%, -50%);text-align: center" onclick="detail('{{ c.number}}')">
+              <div>
+                <img src="{{ url_for('static', filename='upscale/' + c.number + '.png')}}" style="width: 150px; height: 150px"/>
+              </div>
+              <div>
+                <a style = "width : 150px; height:100px; font-size: 12px; font-family: Apple SD Gothic Neo, Noto Sans KR, sans-serif;
+                font-weight: bold;
+                color: #000; overflow:hidden">{{c.name}}</a>
+              </div>
+            </div>
+            </li>
+            {% endfor %}
+          </li>
+          </ul>    
+
+      </div>  
       <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
       <script>
       purchase= function(number, userid) {
@@ -26,5 +72,10 @@
           })
         };
 
+        function detail(a){
+          window.location.href = 'http://localhost:8080/detail/' + a;
+    }
+
       </script>
+      </body>
 </html>
