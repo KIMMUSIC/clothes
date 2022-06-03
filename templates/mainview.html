@@ -21,29 +21,29 @@
         &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; +
       </button>
       <div class="dropdown-content" >
-        <a href="mainview/short sleeve t-shirt">short sleeve t-shirt</a>
-        <a href="mainview/polo shirt">polo shirt</a>
-        <a href="mainview/long sleeve t-shirt">long sleeve t-shirt</a>
-        <a href="mainview/sweatshirt">sweatshirt</a>
-        <a href="mainview/sleeveless tee">sleeveless tee</a>
-        <a href="mainview/hoodie">hoodie</a>
-        <a href="mainview/shirt">shirt</a>
-        <a href="mainview/sweater">sweater</a>
-        <a href="mainview/hood zip up">hood zip up</a>
-        <a href="mainview/coat">coat</a>
-        <a href="mainview/rider jacket">rider jacket</a>
-        <a href="mainview/mustang">mustang</a>
-        <a href="mainview/trucker jacket">trucker jacket</a>
-        <a href="mainview/suit">suit</a>
-        <a href="mainview/short padding">short padding</a>
-        <a href="mainview/long padding">long padding</a>
-        <a href="mainview/Cardigan">Cardigan</a>
-        <a href="mainview/padded vest">padded vest</a>
-        <a href="mainview/anorak jacket">anorak jacket</a>
-        <a href="mainview/vest">vest</a>
-        <a href="mainview/Fleece">Fleece</a>
-        <a href="mainview/training jacket">training jacket</a>
-        <a href="mainview/stadium jacket">stadium jacket</a>
+        <a href="short sleeve t-shirt">short sleeve t-shirt</a>
+        <a href="polo shirt">polo shirt</a>
+        <a href="long sleeve t-shirt">long sleeve t-shirt</a>
+        <a href="sweatshirt">sweatshirt</a>
+        <a href="sleeveless tee">sleeveless tee</a>
+        <a href="hoodie">hoodie</a>
+        <a href="shirt">shirt</a>
+        <a href="sweater">sweater</a>
+        <a href="hood zip up">hood zip up</a>
+        <a href="coat">coat</a>
+        <a href="rider jacket">rider jacket</a>
+        <a href="mustang">mustang</a>
+        <a href="trucker jacket">trucker jacket</a>
+        <a href="suit">suit</a>
+        <a href="short padding">short padding</a>
+        <a href="long padding">long padding</a>
+        <a href="Cardigan">Cardigan</a>
+        <a href="padded vest">padded vest</a>
+        <a href="anorak jacket">anorak jacket</a>
+        <a href="vest">vest</a>
+        <a href="Fleece">Fleece</a>
+        <a href="training jacket">training jacket</a>
+        <a href="stadium jacket">stadium jacket</a>
       </div>
     </div>
     <div class="dropdown" style="margin-bottom: 30px;">
@@ -53,14 +53,14 @@
       </button>
       <div class="dropdown-content">
         <div>
-          <a href="mainview/denim pants">denim pants</a>
-          <a href="mainview/short pants">short pants</a>
+          <a href="denim pants">denim pants</a>
+          <a href="short pants">short pants</a>
         </div>
-        <a href="mainview/cotton pants">cotton pants</a>
-        <a href="mainview/Leggings">Leggings</a>
-        <a href="mainview/slacks">slacks</a>
-        <a href="mainview/training pants">training pants</a>
-        <a href="mainview/skirt">skirt</a>
+        <a href="cotton pants">cotton pants</a>
+        <a href="Leggings">Leggings</a>
+        <a href="slacks">slacks</a>
+        <a href="training pants">training pants</a>
+        <a href="skirt">skirt</a>
       </div>
     </div>
     <div class="dropdown" style="margin-bottom: 30px;">
@@ -69,16 +69,49 @@
         &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; +
       </button>
       <div class="dropdown-content">
-        <a href="mainview/onepiece">onepiece</a>
+        <a href="onepiece">onepiece</a>
       </div>
     </div>
   </div>
   
     <section class="content" style="display: grid; margin: 0px; ">
-        <h2>main</h2>
-        {%if userid%}
-        {{userid}}<a>안녕하세요</a>
-        {%endif%}
+      <h2><a href="/">main</a></h2>
+        <div style="height:40px; width:600px; border:1px solid #1b5ac2; background:#ffffff; float:left;">
+          <input type="file | text" placeholder="검색어 입력" style="font-size:16px; width:325px; padding:10px; border:0px; outline  : none; float:left;">
+          <button style="width: 50px; height:100%; border: 0px; background: #1b5ac2; outline:none; float:right; color:#ffffff">검색</button>
+          <img src="{{ url_for('static', filename='image/camera.png')}}" style="width:30px; height : 30px; float:left;" onclick="imgClick()">
+          <img src="{{ url_for('static', filename='image/pencil.png')}}" style="width:30px; height : 30px; float:left;" onclick="pencilClick()">
+          <img src="{{ url_for('static', filename='image/imgicon.png')}}" style="width:30px; height : 30px; float:left;" onclick="cameraClick()">
+        </div>
+        <div id="imgup" style="display:none;">
+        <form action = "http://localhost:8080/query2" method = "POST" enctype = "multipart/form-data">
+          <input type = "file" name = "file" />
+          <input type = "submit"/>
+        </form>
+        </div>
+
+        <div id="pencil" style="display: none; position:absolute; top:150px; z-index: 100;">
+          <div id="Toggle2" >
+
+              <canvas id="sketch" width="500" height ="500" style="border : 1px solid black; background-color: #ffffff;"></canvas>
+              <button onclick="uploadCanvasToServer()">제출</button>
+          </div>
+        </div>
+
+        <div id="camera" style="display: none; position:absolute; top:150px; z-index: 100;">
+            <div id="Toggle">
+
+            <video  id="myVideo" width="400" height="300" style="border: 1px solid #ddd; background-color: #ffffff;"></video>
+            <canvas id="myCanvas" width="160" height="140" style="border: 1px solid #ddd; background-color: #ffffff;"></canvas><br>
+            <button onclick="uploadCanvasToServer()">제출</button>
+
+
+
+            <input type=button value="get Video" onclick="{getVideo()}">
+            <input type=button value="get Pic" onclick="{takeSnapshot()}"><br>
+            </div>
+        </div>
+        
         <div class="box bg-1">
           <ul>
               {% for c in file_list%}
@@ -118,6 +151,10 @@
 
 </body>
 </html>
+
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+
+<script src="{{ url_for('static', filename='js/webcam.js') }}" > </script>
 <script>
     function c(a){
         if(window.location.href.indexOf("index") > -1){
@@ -159,5 +196,38 @@
 
   function detail(a){
           window.location.href = 'http://localhost:8080/detail/' + a;
+    }
+
+    function imgClick(a){
+          if($("#imgup").css("display") == "none" ){
+            $("#imgup").css("display","block");
+          }else{
+            $("#imgup").css("display","none");
+          }
+
+          
+
+    }
+
+    function pencilClick(a){
+          if($("#pencil").css("display") == "none" ){
+            $("#pencil").css("display","block");
+          }else{
+            $("#pencil").css("display","none");
+          }
+
+          
+
+    }
+
+    function cameraClick(a){
+          if($("#camera").css("display") == "none" ){
+            $("#camera").css("display","block");
+          }else{
+            $("#camera").css("display","none");
+          }
+
+          
+
     }
 </script>

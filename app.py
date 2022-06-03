@@ -47,7 +47,7 @@ if now.month<=2 or now.month==12:
     nseason="winter"
 
 UPLOAD_FOLDER = '\static\image'
-ALLOWED_EXTENSION = {'txt', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSION = {'txt', 'png', 'jpg', 'jpeg', 'gif', 'PNG'}
 
 path = "static/image/"
 file_list = os.listdir(path)
@@ -137,7 +137,7 @@ class Clothes(db.Model):
 @app.route('/')
 def main():
     userid = session.get('userid',None)
-    return render_template('index.html', userid = userid)
+    return render_template('mainview.html', userid = userid)
 
 @app.route('/mycsv', methods=['POST'])
 def my_csv():
@@ -250,7 +250,7 @@ def recommend():
         else:
             c[cate] = 0
         if(c[cate] > 3): continue
-        file_list.append(str(id))
+        file_list.append(item)
         total = total+1
         if(total >= 10): break
 
@@ -274,7 +274,7 @@ def recommend():
         else:
             c2[cate] = 0
         if(c2[cate] > 3): continue
-        file_list.append(str(id))
+        file_list.append(item)
         total2 = total2+1
         if(total2 >= 10): break
 
@@ -323,7 +323,7 @@ def recommend2():
         else:
             c[cate] = 0
         if(c[cate] > 3): continue
-        file_list.append(str(id))
+        file_list.append(item)
         total = total+1
         if(total >= 10): break
 
@@ -347,7 +347,7 @@ def recommend2():
         else:
             c2[cate] = 0
         if(c2[cate] > 3): continue
-        file_list.append(str(id))
+        file_list.append(item)
         total2 = total2+1
         if(total2 >= 10): break
 
@@ -467,7 +467,9 @@ def detail(number):
 def upload_file2():
     if request.method == 'POST':
         f = request.files['file']
+        print(f)
         if f and allowed_file(f.filename):
+            print('됨')
             f.save(secure_filename(f.filename))
             feature_list = np.array(pickle.load(open('embeddings.pkl','rb')))
             filenames = pickle.load(open('filenames.pkl','rb'))
@@ -490,9 +492,8 @@ def upload_file2():
             distances,indices = neighbors.kneighbors([normalized_result])
             file_list=[]
             for file in indices[0][1:6]:
-                print(filenames[file], filenames[file][8:])
-                file_list.append((filenames[file])[8:])
-            return render_template('query.html', file_list=file_list, count=len(file_list), dbimg = dbimg.query.all())
+                file_list.append(Clothes.query.filter(Clothes.number == int((filenames[file])[8:-4])).first())
+            return render_template('mainview.html', file_list=file_list, count=len(file_list))
                 
 
 @app.route('/new', methods = ['GET', 'POST'])
