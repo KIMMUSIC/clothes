@@ -13,8 +13,24 @@
     alert('{{error}}');
   }
 </script>
-<body onload="load()">
-  <div style="float:left; margin-top: 150px; width: 200px">
+<body>
+  <div style="height : 60px; margin-top:50px; background-color: #000;">
+    <span  style="color:#ffffff; font-size:30px; font-weight: bold; margin-left:30px; vertical-align: middle;line-height: 56px; cursor:pointer;" onclick="location.href='/';">HOME</span>
+    <span  style="color:#ffffff; float:right; font-size:20px; font-weight: bold; margin-right:60px; vertical-align: middle;line-height: 56px; cursor:pointer;">
+    {%if userid%}
+    <span style="margin-right: 50px;">{{userid}}</span><span onclick="location.href='/logout' ">로그아웃</span> 
+    {%else%} <span style="margin-right: 50px;" onclick="location.href='/login' ">로그인</span> <span onclick="location.href='/register' ">회원가입</span> 
+    {%endif%}
+    </span>
+    
+  </div>
+
+  <div style="float:left; margin-top: 180px;margin-left:50px; width: 200px">
+    <div class="dropdown" style="margin-bottom: 30px;">
+      <button class="dropbtn" onclick="location.href='/recommend'"> 
+        <span class="dropbtn_icon">recommend</span>
+      </button>
+    </div>
     <div class="dropdown" style="margin-bottom: 30px;">
       <button class="dropbtn"> 
         <span class="dropbtn_icon">top</span>
@@ -74,26 +90,65 @@
     </div>
   </div>
   
-    <section class="content" style="display: grid; margin: 0px; ">
-        <h2><a href="/">main</a></h2>
-        {%if userid%}
-        {{userid}}<a>안녕하세요</a>
-        {%endif%}
-        <div>
-          <form method="get" action="/recommend2">
-            <label><input id = "season" type="checkbox" name="season" value="true" > 계절 </label>
-            <label><input id = "gender" type="checkbox" name="gender" value="true" > 성별</label>
-            <select id = "situation" name="situation" class="select">
-              <option value="all">상황</option>
-              <option value="casual">casual</option>
-              <option value="office">office</option>
-              <option value="gym">gym</option>
-          </select>
-            <p><input type="submit"onclick="save()" value="Submit"></p>
-          </form>
+  <section class="content" style="display: grid; margin-left:400px; ">
+    <div style="height:40px; width:800px; border:1px solid black; background:#ffffff; float:left; margin-left:100px;">
+      <input id = "textquery"type="text" placeholder="검색어 입력" style="font-size:16px; width:600px; padding:10px; border:0px; outline  : none; float:left;">
+      <button style="width: 50px; height:100%; border: 0px; background: black; outline:none; float:right; color:#ffffff" onclick="textquery()">검색</button>
+      <img src="{{ url_for('static', filename='image/camera.png')}}" style="width:30px; height : 30px; float:right;margin-top: 3px;margin-right:10px;" onclick="cameraClick()">
+      <img src="{{ url_for('static', filename='image/pencil.png')}}" style="width:30px; height : 30px; float:right;margin-top: 3px;margin-right:10px;" onclick="pencilClick()">
+      <img src="{{ url_for('static', filename='image/imgicon.png')}}" style="width:30px; height : 30px; float:right;margin-top: 3px; margin-right:10px;" onclick="imgClick()">
+    </div>
+    <div id="imgup" style="display:none;margin-left:100px;">
+    <form action = "http://localhost:8080/query2" method = "POST" enctype = "multipart/form-data">
+      <input type = "file" name = "file" />
+      <input type = "submit"/>
+    </form>
+    </div>
+
+    <div id="pencil" style="display: none; margin-left:100px;">
+      <div id="Toggle2" >
+
+          <canvas id="sketch" width="500" height ="500" style="border : 1px solid black; background-color: #ffffff;"></canvas>
+          <button onclick="reset()">초기화</button>
+          <button onclick="uploadSketchToServer()">제출</button>
+      </div>
+    </div>
+
+    <div id="camera" style="display: none; margin-left:100px;">
+        <div id="Toggle">
+
+        <video  id="myVideo" width="400" height="300" style="border: 1px solid #ddd; background-color: #ffffff;"></video>
+        <canvas id="myCanvas" width="160" height="140" style="border: 1px solid #ddd; background-color: #ffffff;"></canvas><br>
+        <button onclick="uploadCanvasToServer()">제출</button>
+
+
+
+        <input type=button value="get Video" onclick="{getVideo()}">
+        <input type=button value="get Pic" onclick="{takeSnapshot()}"><br>
         </div>
-        <div class="box bg-1">
-          <ul>
+    </div>
+
+
+
+        
+        <div class="box bg-1" style="margin-top:100px;">
+          <div style="margin-left:600px;"> 
+            <form method="get" action="/recommend2">
+              <label><input id = "season" type="checkbox" name="season" value="true" > 계절 </label>
+              <label><input id = "gender" type="checkbox" name="gender" value="true" > 성별</label>
+              <select id = "situation" name="situation" class="select">
+                <option value="all">모두</option>
+                <option value="casual">casual</option>
+                <option value="office">office</option>
+                <option value="sports">sports</option>
+                <option value="inner">inner</option>
+                <option value="formal">formal</option>
+                <option value="street">street</option> 
+            </select>
+              <input type="submit"onclick="save()" value="적용">
+            </form>
+          </div>
+          <ul style="margin-left:50px;">
               {% for c in file_list%}
               <li style="width : 160px; height : 250px;
               border: 0.5px solid #000; margin:1px; overflow:hidden; ">
@@ -131,6 +186,9 @@
 
 </body>
 </html>
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+
+<script src="{{ url_for('static', filename='js/webcam.js') }}" > </script>
 <script>
     function c(a){
         if(window.location.href.indexOf("index") > -1){
@@ -193,7 +251,7 @@
     localStorage.setItem('situation',currentValue)
 }
 
-function load(){    
+function load(){   
     var checked = localStorage.getItem('gender');
     if (checked == "true") {
         document.getElementById("gender").setAttribute('checked','checked');
@@ -204,9 +262,129 @@ function load(){
         document.getElementById("season").setAttribute('checked','checked');
     }
 
-    const select = document.querySelector(".select");
+    const select = document.getElementById("situation");
     select.value = localStorage.getItem('situation');
 
     
 }
+
+function detail(a){
+          window.location.href = 'http://localhost:8080/detail/' + a;
+    }
+
+    function imgClick(a){
+          if($("#imgup").css("display") == "none" ){
+            $("#imgup").css("display","block");
+          }else{
+            $("#imgup").css("display","none");
+          }
+
+          
+
+    }
+
+    function pencilClick(a){
+          if($("#pencil").css("display") == "none" ){
+            $("#pencil").css("display","block");
+          }else{
+            $("#pencil").css("display","none");
+          }
+
+          
+
+    }
+
+    function cameraClick(a){
+          if($("#camera").css("display") == "none" ){
+            $("#camera").css("display","block");
+          }else{
+            $("#camera").css("display","none");
+          }
+
+          
+
+    }
+    uploadCanvasToServer = function() {
+    const canvas = document.getElementById('myCanvas');
+    const imgBase64 = canvas.toDataURL('image/jpeg', 'image/octet-stream');
+    const decodImg = atob(imgBase64.split(',')[1]);
+  
+    let array = [];
+    for (let i = 0; i < decodImg .length; i++) {
+      array.push(decodImg .charCodeAt(i));
+    }
+  
+    const file = new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+    const fileName = 'canvas_img_' + new Date().getMilliseconds() + '.jpg';
+    let formData = new FormData();
+    formData.append('file', file, fileName);
+  
+    $.ajax({
+      type: 'post',
+      url: '/query2',
+      cache: false,
+      data: formData,
+      processData: false,
+      contentType: false,
+      async : false,
+      success: function (data) {
+        $('html').html(data)
+      }
+    })
+  };
+
+
+  uploadSketchToServer = function() {
+    const canvas = document.getElementById('sketch');
+    const imgBase64 = canvas.toDataURL('image/png', 'image/octet-stream');
+    const decodImg = atob(imgBase64.split(',')[1]);
+  
+    let array = [];
+    for (let i = 0; i < decodImg .length; i++) {
+      array.push(decodImg .charCodeAt(i));
+    }
+  
+    const file = new Blob([new Uint8Array(array)], {type: 'image/png'});
+    const fileName = 'canvas_img_' + new Date().getMilliseconds() + '.png';
+    let formData = new FormData();
+    formData.append('file', file, fileName);
+  
+    $.ajax({
+      type: 'post',
+      url: '/sketchquery',
+      cache: false,
+      data: formData,
+      processData: false,
+      contentType: false,
+      async : false,
+      success: function (data) {
+        $('html').html(data)
+      }
+    })
+  };
+  reset = function(){
+    canvas = document.getElementById("sketch");
+    ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0,0,500,500);
+  }
+
+  textquery = function(){
+    var textq = document.getElementById("textquery").value;
+    let formData = new FormData();
+    formData.append('file', textq);
+    $.ajax({
+      type: 'post',
+      url: '/query',
+      cache: false,
+      data: formData,
+      processData: false,
+      contentType: false,
+      async : false,
+      success: function (data) {
+        $('html').html(data)
+      }
+    })
+  }
 </script>

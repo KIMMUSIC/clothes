@@ -7,7 +7,20 @@
     <!--<link rel="stylesheet" href="static/css/button_tem.css">-->
     <link href="{{ url_for('static', filename='css/detail.css') }}" rel="stylesheet">
 </head>
+
 <body>
+
+  <div style="height : 60px; margin-top:50px; background-color: #000;">
+    <span  style="color:#ffffff; font-size:30px; font-weight: bold; margin-left:30px; vertical-align: middle;line-height: 56px; cursor:pointer;" onclick="location.href='/';">HOME</span>
+    <span  style="color:#ffffff; float:right; font-size:20px; font-weight: bold; margin-right:60px; vertical-align: middle;line-height: 56px; cursor:pointer;">
+    {%if userid%}
+    <span style="margin-right: 50px;">{{userid}}</span><span onclick="location.href='/logout' ">로그아웃</span> 
+    {%else%} <span style="margin-right: 50px;" onclick="location.href='/login' ">로그인</span> <span onclick="location.href='/register' ">회원가입</span> 
+    {%endif%}
+    </span>
+    
+  </div>
+  <div id="ibody">
     <div style='overflow:hidden'>
       <h1>{{id.name}}</h1>
       <div class="image">
@@ -24,6 +37,27 @@
         {% for c in attr%}
         <div style="margin-top : 5px;">#{{c}}</div>
         {%endfor%}
+        <div>
+ 
+          {% if rating %}
+            {% if rating.rating %}
+            {% for i in range(0,rating.rating|int)%}
+            <span class="star" id="start1" style="font-size:30px;">★</span>
+            {%endfor%}
+            {%else%}
+            <div class="star-container" id="star">
+              <span class="star" id="start1" style="font-size:30px; cursor: pointer;">☆</span>
+              <span class="star" id="start2" style="font-size:30px;cursor: pointer;">☆</span>
+              <span class="star" id="start3" style="font-size:30px;cursor: pointer;">☆</span>
+              <span class="star" id="start4" style="font-size:30px;cursor: pointer;">☆</span>
+              <span class="star" id="start5" style="font-size:30px;cursor: pointer;">☆</span>
+              <span style="background : #000; color: #fff; width: 60px; height: 30px; text-align: center; line-height: 58px; margin-left:30px; cursor: pointer;"onclick="ratingtoserver('{{rating.productid}}');">제출</span>
+          </div>
+          
+            {%endif%}
+          {%endif%}
+        </div>
+
         <div style="margin-top : 30px;">
         <div style="background : #000; color: #fff; width: 270px; height: 60px; text-align: center; line-height: 58px; float : left; margin-right:10px" ><A href = "{{id.link}}" target="_blank" style="text-decoration-line: none;color: inherit;" >바로가기</a></div>
         <div style="background : #000; color: #fff; width: 270px; height: 60px; text-align: center; line-height: 58px; float:left"><a onclick = "purchase('{{id.number}}')" style="cursor:pointer">구매하기</a></div>
@@ -56,7 +90,8 @@
           </li>
           </ul>    
 
-      </div>  
+      </div>
+    </div>  
       <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
       <script>
       purchase= function(number, userid) {
@@ -68,6 +103,7 @@
             data: {itemid : itemid},
             success: function () {
               alert("Success");
+              document.location.href = document.location.href;
             }
           })
         };
@@ -75,6 +111,42 @@
         function detail(a){
           window.location.href = 'http://localhost:8080/detail/' + a;
     }
+
+    var $starEls = $('#star span.star');
+var rate = 0;
+
+$starEls.each(function (index, el) {
+    $(el).on('click', function () {
+        rating(index);
+    });
+});
+
+function rating(score) {
+    $starEls.each(function (i, el) {
+        if (i <= score) {
+            $(el).addClass('on');
+            $(el).text('★');
+        } else {
+            $(el).removeClass('on');
+            $(el).text('☆');
+        }
+    });
+
+    rate = score + 1;
+}
+
+ratingtoserver= function(number) {
+          alert(rate)
+          $.ajax({
+            type: 'POST',
+            url: '/rating',
+            cache: false,
+            data: {itemid : number, rating : rate},
+            success: function () {
+              document.location.href = document.location.href;
+            }
+          })
+        };
 
       </script>
       </body>

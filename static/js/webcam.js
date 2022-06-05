@@ -30,13 +30,36 @@ var pos = {
 var canvas, ctx;
 
 window.onload = function(){
+
+
     canvas = document.getElementById("sketch");
     ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0,0,500,500);
 
     canvas.addEventListener("mousedown", listener);
     canvas.addEventListener("mousemove", listener);
     canvas.addEventListener("mouseup", listener);
     canvas.addEventListener("mouseout", listener);
+
+    try{
+    var checked = localStorage.getItem('gender');
+    if (checked == "true") {
+        document.getElementById("gender").setAttribute('checked','checked');
+    }
+
+    var checked2 = localStorage.getItem('season');
+    if (checked2 == "true") {
+        document.getElementById("season").setAttribute('checked','checked');
+    }
+
+    const select = document.getElementById("situation");
+    select.value = localStorage.getItem('situation');
+}
+catch(e){
+    
+}
  
 }
 

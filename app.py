@@ -47,7 +47,7 @@ if now.month<=2 or now.month==12:
     nseason="winter"
 
 UPLOAD_FOLDER = '\static\image'
-ALLOWED_EXTENSION = {'txt', 'png', 'jpg', 'jpeg', 'gif', 'PNG'}
+ALLOWED_EXTENSION = {'txt', 'png', 'jpg', 'jpeg', 'gif', 'PNG', 'JPG', 'JPEG'}
 
 path = "static/image/"
 file_list = os.listdir(path)
@@ -82,7 +82,7 @@ cf_table, model = init_CF()
 
 
 def recommand_cf(model, uid, cf_table):
-    recommanded = model.recommend(uid, cf_table[0])
+    recommanded = model.recommend(uid, cf_table[0],N=3509)
     return recommanded[0]
 
 
@@ -134,10 +134,33 @@ class Clothes(db.Model):
     gender = db.Column(db.String(10))
     nouns = db.Column(db.String(200))
 
+class Purchase(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    userid = db.Column(db.String(100))
+    productid = db.Column(db.String(100))
+    rating = db.Column(db.Integer)
+
 @app.route('/')
 def main():
     userid = session.get('userid',None)
-    return render_template('mainview.html', userid = userid)
+    return redirect(url_for('goods', category = "short sleeve t-shirt"))
+
+@app.route('/rating', methods=["POST"])
+def rating():
+    id = session.get('userid',None)
+    rating = request.form['rating']
+    item = request.form['itemid']
+    userid = User.query.filter(User.userid == id).first()
+    existed= Purchase.query.filter(Purchase.userid == id).filter(Purchase.productid == item).first()
+    existed.rating = int(rating)
+    db.session.add(existed)
+    db.session.commit()
+
+    with open('rating.csv' , 'a' , encoding = 'cp949' ,newline = '') as input_file:
+            f = csv_.writer(input_file)
+            f.writerow([userid.id, item, rating])
+    return redirect('/')
+
 
 @app.route('/mycsv', methods=['POST'])
 def my_csv():
@@ -148,10 +171,9 @@ def my_csv():
         
     csv = pd.read_csv('musin.csv', names = ['id', 'attrs'], encoding = 'cp949')
     
-    find_row = csv.loc[(csv['id'] == int(id))]
+    find_row = csv.loc[(csv['id'] == id)]
     find_row_list = find_row.values.tolist()
     
-    print(find_row)
     
     # 출력 부분 print(find_row_list, file=sys.stderr)
     
@@ -177,6 +199,14 @@ def my_csv():
         with open('musin.csv', 'w', encoding = 'cp949', newline='')as w_file:
             wr =csv_.writer(w_file)
             wr.writerows(modified_file)
+
+    existed= Purchase.query.filter(Purchase.userid == id).filter(Purchase.productid == itemid).first()
+    if(existed == None):
+        ratingtable = Purchase()
+        ratingtable.userid = id
+        ratingtable.productid = itemid
+        db.session.add(ratingtable)
+        db.session.commit()
                
     return redirect('/')
 
@@ -212,10 +242,12 @@ def select_image():
 def recommend():
 
     userid = session.get('userid',None)
+    if(userid == None):
+        return '로그인해라'
     user = User.query.filter(User.userid == str(userid)).first()
     ugender = user.gender
     csv = pd.read_csv('musin.csv', names = ['id','attrs'], encoding = 'cp949')
-    row = csv.loc[(csv['id'] == int(userid))]
+    row = csv.loc[(csv['id'] == userid)]
     season = request.cookies.get('season')
     gender = request.cookies.get('gender')
     situation = request.cookies.get('situation')
@@ -234,6 +266,7 @@ def recommend():
     c = {}
     c2 = {}
     total2 = 0
+    flag = 0
     for id in clothes_sim_idx:
         item = Clothes.query.filter(Clothes.number == int(id)).first()
         if season == 'true':
@@ -243,43 +276,49 @@ def recommend():
             if item.gender != '공용':
                 if item.gender != ugender:
                     continue
-
+        if situation != None:
+            if situation != 'all':
+                flag = 1
+                if item.situation != situation:
+                    continue
         cate = item.cate
         if cate in c:
             c[cate]  = c[cate] + 1
         else:
             c[cate] = 0
-        if(c[cate] > 3): continue
+        if(c[cate] > 3 and flag == 0): continue
         file_list.append(item)
         total = total+1
         if(total >= 10): break
 
-
-
-    recommand_item = recommand_cf(model, int(userid), cf_table)
-    print(recommand_item)
-    for id in recommand_item:
-        item = Clothes.query.filter(Clothes.number == int(id)).first()
-        print(season, nseason, item.season)
-        if season == 'true':
-            if item.season != nseason:
-                continue
-        if gender == 'true':
-            if item.gender != '공용':
-                if item.gender != ugender:
+    record = Purchase.query.filter(Purchase.userid == userid).filter(Purchase.rating > 0).first()
+    if record != None:
+        recommand_item = recommand_cf(model, user.id, cf_table)
+        for id in recommand_item:
+            item = Clothes.query.filter(Clothes.number == int(id)).first()
+            if season == 'true':
+                if item.season != nseason:
                     continue
-        cate = item.cate
-        if cate in c2:
-            c2[cate]  = c2[cate] + 1
-        else:
-            c2[cate] = 0
-        if(c2[cate] > 3): continue
-        file_list.append(item)
-        total2 = total2+1
-        if(total2 >= 10): break
+            if gender == 'true':
+                if item.gender != '공용':
+                    if item.gender != ugender:
+                        continue
+            if situation != None:
+                if situation != 'all':
+                    if item.situation != situation:
+                        continue
+            cate = item.cate
+            if cate in c2:
+                c2[cate]  = c2[cate] + 1
+            else:
+                c2[cate] = 0
+            if(c2[cate] > 3 and flag == 0): continue
+            file_list.append(item)
+            total2 = total2+1
+            if(total2 >= 10): break
 
 
-    return render_template('mainview2.html', file_list=file_list, count=len(file_list))
+    return render_template('mainview2.html', file_list=file_list, count=len(file_list), userid = userid)
 
 @app.route('/recommend2')
 def recommend2():
@@ -291,7 +330,7 @@ def recommend2():
     situation = request.args.get('situation')
     userid = session.get('userid',None)
     csv = pd.read_csv('musin.csv', names = ['id','attrs'], encoding = 'cp949')
-    row = csv.loc[(csv['id'] == int(userid))]
+    row = csv.loc[(csv['id'] == userid)]
 
     clothes = pd.read_csv('result.csv', encoding='cp949')
     clothes_df = clothes[['number','name','link','tob','cate','season','situation','gender','tag','attr','nouns']]
@@ -307,51 +346,60 @@ def recommend2():
     c = {}
     c2 ={}
     total2 = 0
+    flag = 0
     for id in clothes_sim_idx:
         item = Clothes.query.filter(Clothes.number == int(id)).first()
-        print(season, nseason, item.season)
         if season == 'true':
             if item.season != nseason:
                 continue
         if gender == 'true':
             if item.gender != '공용':
                 if item.gender != ugender:
+                    continue
+        if situation != None:
+            if situation != 'all':
+                flag = 1
+                if item.situation != situation:
                     continue
         cate = item.cate
         if cate in c:
             c[cate]  = c[cate] + 1
         else:
             c[cate] = 0
-        if(c[cate] > 3): continue
+        if(c[cate] > 3 and flag == 1): continue
         file_list.append(item)
         total = total+1
         if(total >= 10): break
 
 
+    record = Purchase.query.filter(Purchase.userid == userid).filter(Purchase.rating > 0).first()
 
-    recommand_item = recommand_cf(model, int(userid), cf_table)
-    print(recommand_item)
-    for id in recommand_item:
-        item = Clothes.query.filter(Clothes.number == int(id)).first()
-        print(season, nseason, item.season)
-        if season == 'true':
-            if item.season != nseason:
-                continue
-        if gender == 'true':
-            if item.gender != '공용':
-                if item.gender != ugender:
+    if record != None:
+        recommand_item = recommand_cf(model, user.id, cf_table)
+        for id in recommand_item:
+            item = Clothes.query.filter(Clothes.number == int(id)).first()
+            if season == 'true':
+                if item.season != nseason:
                     continue
-        cate = item.cate
-        if cate in c2:
-            c2[cate]  = c2[cate] + 1
-        else:
-            c2[cate] = 0
-        if(c2[cate] > 3): continue
-        file_list.append(item)
-        total2 = total2+1
-        if(total2 >= 10): break
+            if gender == 'true':
+                if item.gender != '공용':
+                    if item.gender != ugender:
+                        continue
+            if situation != None:
+                if situation != 'all':
+                    if item.situation != situation:
+                        continue
+            cate = item.cate
+            if cate in c2:
+                c2[cate]  = c2[cate] + 1
+            else:
+                c2[cate] = 0
+            if(c2[cate] > 3 and flag == 1): continue
+            file_list.append(item)
+            total2 = total2+1
+            if(total2 >= 10): break
 
-    res = make_response(render_template('mainview2.html', file_list=file_list, count=len(file_list)))
+    res = make_response(render_template('mainview2.html', file_list=file_list, count=len(file_list), userid = userid))
 
 
     if gender is None: res.set_cookie('gender','false') 
@@ -369,7 +417,6 @@ def register2():
     userid = request.form.get('userid')
     gender = request.form.get('gender')
     password = request.form.get('password')
-    print(userid, gender, password)
     if not(userid and gender and password):
         return "입력되지 않은 정보가 있습니다"
     else:
@@ -377,10 +424,13 @@ def register2():
         usertable.userid = userid
         usertable.gender = gender
         usertable.password = password
-        print(userid, gender, password)
         db.session.add(usertable)
         db.session.commit()
-        return "회원가입 성공"
+        
+        with open('musin.csv' , 'a' , encoding = 'cp949' ,newline = '') as input_file:
+            f = csv_.writer(input_file)
+            f.writerow([userid, "test"])
+
     return redirect('/')
 
     
@@ -393,15 +443,18 @@ def login2():
     session['userid'] = userid
     return redirect('/')
 
+@app.route('/logout',methods=['GET'])
+def logout():
+    session.pop('userid',None)
+    return redirect('/')
+
 @app.route('/query', methods=['POST']) #GET(정보보기), POST(정보수정) 메서드 허용
 def query():
-    query = request.form.get('query')
+    query = request.form['file']
+    print(query)
     search = "%{}%".format(query)
     id = Clothes.query.filter(Clothes.nouns.like(search)).all()
-    file_list=[]
-    for num in id:
-        file_list.append(str(num.number)+".png")
-    return render_template('query.html', file_list=file_list, count=len(file_list), dbimg = dbimg.query.all())
+    return render_template('mainview.html', file_list=id, count=len(file_list))
     
 
     
@@ -433,18 +486,25 @@ def upload_file():
 
 @app.route('/mainview/<category>', methods = ['GET'])
 def goods(category):
+    userid = session.get('userid',None)
     query = category
     id = Clothes.query.filter(Clothes.cate == query).all()
     file_list=[]
     for num in id:
         file_list.append(str(num.number)+".png")
-    return render_template('mainview.html', file_list=id, count=len(file_list))
+    return render_template('mainview.html', file_list=id, count=len(file_list), userid = userid)
 
 @app.route('/detail/<number>', methods = ['GET'])
 def detail(number):
     query = number
     id = Clothes.query.filter(Clothes.number == query).first()
     attrs = json_data[int(number)]['tag']
+    userid = session.get('userid',None)
+
+    purchased = Purchase.query.filter(Purchase.userid == str(userid)).filter(Purchase.productid == str(query)).first()
+
+
+
 
     clothes = pd.read_csv('result.csv', encoding='cp949')
     clothes_df = clothes[['number','name','link','tob','cate','season','situation','gender','tag','attr','nouns']]
@@ -458,18 +518,14 @@ def detail(number):
         cl = Clothes.query.filter(Clothes.number == int(a)).first()
         file_list.append(cl)
 
-
-
-    return render_template('detail.html', id=id,attr = attrs, clothes = file_list, count=len(file_list))
+    return render_template('detail.html', id=id,attr = attrs, clothes = file_list, rating = purchased, count=len(file_list), userid = userid)
 
 
 @app.route('/query2', methods = ['POST'])
 def upload_file2():
     if request.method == 'POST':
         f = request.files['file']
-        print(f)
         if f and allowed_file(f.filename):
-            print('됨')
             f.save(secure_filename(f.filename))
             feature_list = np.array(pickle.load(open('embeddings.pkl','rb')))
             filenames = pickle.load(open('filenames.pkl','rb'))
@@ -493,6 +549,36 @@ def upload_file2():
             file_list=[]
             for file in indices[0][1:6]:
                 file_list.append(Clothes.query.filter(Clothes.number == int((filenames[file])[8:-4])).first())
+            return render_template('mainview.html', file_list=file_list, count=len(file_list))
+
+@app.route('/sketchquery', methods = ['POST'])
+def sketchquery():
+    if request.method == 'POST':
+        f = request.files['file']
+        if f and allowed_file(f.filename):
+            f.save(secure_filename(f.filename))
+            feature_list = np.array(pickle.load(open('sketchembeddings.pkl','rb')))
+            filenames = pickle.load(open('sketchfilenames.pkl','rb'))
+            model = ResNet50(weights='imagenet',include_top=False,input_shape=(224,224,3))
+            model.trainable = False
+            model = tensorflow.keras.Sequential([
+                model,
+                GlobalMaxPooling2D()
+            ])
+            img = image.load_img(f.filename,target_size=(224,224))
+            img_array = image.img_to_array(img)
+            expanded_img_array = np.expand_dims(img_array, axis=0)
+            preprocessed_img = preprocess_input(expanded_img_array)
+            result = model.predict(preprocessed_img).flatten()
+            normalized_result = result / norm(result)
+
+            neighbors = NearestNeighbors(n_neighbors=6,algorithm='brute',metric='euclidean')
+            neighbors.fit(feature_list)
+
+            distances,indices = neighbors.kneighbors([normalized_result])
+            file_list=[]
+            for file in indices[0][1:6]:
+                file_list.append(Clothes.query.filter(Clothes.number == int((filenames[file])[7:-4])).first())
             return render_template('mainview.html', file_list=file_list, count=len(file_list))
                 
 
